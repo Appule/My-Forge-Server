@@ -1,0 +1,38 @@
+name: Release Scripts
+
+on:
+  push:
+    branches:
+      - main
+    # scriptsフォルダ内に変更があった時のみ実行します
+    paths:
+      - 'scripts/**'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Zip scripts folder
+        # scriptsディレクトリをそのままzip圧縮します
+        run: zip -r scripts.zip scripts/
+
+      - name: Generate unique tag
+        id: tag
+        # リリースが上書きされないよう、日付と時刻で一意のタグを作ります
+        run: echo "TAG_NAME=v$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+
+      - name: Create Release and Upload Zip
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: Scripts Update ${{ env.TAG_NAME }}
+          files: scripts.zip
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
